@@ -1,4 +1,4 @@
-export const validatePasswordFields = ({ currentPassword, newPassword, confirmPassword }) => {
+const validatePasswordFields = ({ currentPassword, newPassword, confirmPassword }) => {
   const fields = [currentPassword, newPassword, confirmPassword];
 
   // Check if any field is empty or undefined
@@ -11,3 +11,5 @@ export const validatePasswordFields = ({ currentPassword, newPassword, confirmPa
     throw new Error('New password and confirm password must match.');
   }
 };
+
+module.exports = { validatePasswordFields }
