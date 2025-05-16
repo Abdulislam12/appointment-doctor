@@ -59,7 +59,7 @@ const login = async (req, res, next) => {
     // remove accessToken from cookies after 15 min
 
     res
-      .cookie("accessToken", accessToken, { httpOnly: true, maxAge: 15 * 60 * 1000 })
+      .cookie("accessToken", accessToken, { maxAge: 15 * 60 * 1000 })
 
       // remove refreshToken from cookies after 7 days
 
