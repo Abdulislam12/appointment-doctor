@@ -33,4 +33,4 @@ const slotSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Slot', slotSchema);
+module.exports = mongoose.model('slot', slotSchema);
