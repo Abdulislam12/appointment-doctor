@@ -7,6 +7,7 @@ const {
   login,
   logout,
   getProfile,
+  refreshAccessTokenController,
   changePasswordController,
   updateProfile
 } = require("../controllers/auth.controller");
@@ -31,6 +32,8 @@ router.get('/profile', verifyAccessToken, getProfile);
 // @route   POST /api/v1/users/update-profile
 router.put('/update-profile', verifyAccessToken, updateProfile);
 
+// @route POST /api/v1/users/refresh-Token
+router.post("/refresh-token", refreshAccessTokenController);
 
 
 // @testing -- dashboard

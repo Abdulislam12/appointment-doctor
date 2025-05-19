@@ -1,4 +1,4 @@
-const { registerUser, loginUser, logoutUser, changePassword, getUserProfile, updateUserProfile } = require("../services/auth.service");
+const { registerUser, loginUser, logoutUser, changePassword, getUserProfile, updateUserProfile, refreshAccessTokenService } = require("../services/auth.service");
 const { validatePasswordFields } = require("../validations/passwordValidators");
 const ApiResponse = require("../utilis/ApiResponse");
 const ApiError = require("../utilis/ApiError");
@@ -140,12 +140,35 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+// Regenerate Access Token
+
+const refreshAccessTokenController = async (req, res, next) => {
+  try {
+    const { accessToken } = await refreshAccessTokenService(req.cookies?.refreshToken);
+    console.log(req.cookies)
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    const response = new ApiResponse(200, "Access token refreshed", {
+      accessToken,
+    });
+
+    res.status(response.statusCode).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
   updateProfile,
   getProfile,
+  refreshAccessTokenController,
   changePasswordController
 };
 

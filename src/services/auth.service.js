@@ -1,6 +1,7 @@
 const ApiError = require("../utilis/ApiError");
 const User = require('../models/user.model');
 const sendVerificationEmail = require("../services/email.service")
+const jwt = require("jsonwebtoken");
 const { validateRequiredFields, validateFirstName, validateLastName, validateEmail, validatePassword } = require('../validations/authValidations');
 const generateOTP = require('../utilis/generateOtp');
 const verficationCode = generateOTP();
@@ -105,8 +106,6 @@ const getUserProfile = async (userId) => {
   return user;
 };
 
-
-
 // User UpdateProfile Services
 
 const updateUserProfile = async (userId, updateData) => {
@@ -130,6 +129,29 @@ const updateUserProfile = async (userId, updateData) => {
   return updatedUser;
 };
 
+// refresh AccessToken Services
+
+const refreshAccessTokenService = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new ApiError(401, "Refresh token not provided");
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const user = await User.findById(decoded._id);
+
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    const accessToken = user.generateAccessToken();
+
+    return { accessToken };
+  } catch (err) {
+    throw new ApiError(401,err);
+  }
+};
 
 
 
@@ -139,5 +161,6 @@ module.exports = {
   logoutUser,
   changePassword,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  refreshAccessTokenService
 };
