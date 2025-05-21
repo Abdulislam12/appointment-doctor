@@ -145,7 +145,7 @@ const updateProfile = async (req, res, next) => {
 const refreshAccessTokenController = async (req, res, next) => {
   try {
     const { accessToken } = await refreshAccessTokenService(req.cookies?.refreshToken);
-    console.log(req.cookies)
+    // console.log(req.cookies)
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
