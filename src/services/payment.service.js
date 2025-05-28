@@ -1,7 +1,7 @@
 const Stripe = require('stripe');
 const Slot = require('../models/appointment.model');
 const Payment = require('../models/payment.model');
-const ApiError = require('../utilis/ApiError');
+const ApiError = require('../utils/ApiError');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -42,7 +42,7 @@ const createCheckoutSessionService = async (slotId, userId) => {
     amount: 5000,
     currency: 'usd',
     status: 'pending',
-    stripeSessionId: session.id
+    stripeSessionId: session.id,
   });
 
   return {

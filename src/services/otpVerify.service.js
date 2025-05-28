@@ -1,5 +1,5 @@
 const UserModel = require('../models/user.model');
-const ApiError = require('../utilis/ApiError'); 
+const ApiError = require('../utils/ApiError'); 
 const verifyEmail = async (code) => {
     const user = await UserModel.findOne({ verficationCode: code });
 

@@ -1,5 +1,5 @@
 const verifyOtp = require('../services/otpVerify.service');
-const ApiResponse = require('../utilis/ApiResponse');
+const ApiResponse = require('../utils/ApiResponse');
 const verifyEmail = async (req, res) => {
     try {
         const { code } = req.body;

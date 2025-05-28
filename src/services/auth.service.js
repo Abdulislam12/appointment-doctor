@@ -1,9 +1,9 @@
-const ApiError = require("../utilis/ApiError");
+const ApiError = require("../utils/ApiError");
 const User = require('../models/user.model');
 const sendVerificationEmail = require("../services/email.service")
 const jwt = require("jsonwebtoken");
 const { validateRequiredFields, validateFirstName, validateLastName, validateEmail, validatePassword } = require('../validations/authValidations');
-const generateOTP = require('../utilis/generateOtp');
+const generateOTP = require('../utils/generateOtp');
 const verficationCode = generateOTP();
 
 // User registerUser Services

@@ -1,4 +1,4 @@
-const ApiError = require('../utilis/ApiError'); // adjust path as needed
+const ApiError = require('../utils/ApiError'); // adjust path as needed
 
 const validateFirstName = (firstName) => {
   if (firstName.length < 4 || firstName.length > 20) {

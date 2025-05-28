@@ -26,11 +26,13 @@ const authRoutes = require("./src/routes/auth.routes");
 const emailRoutes = require("./src/routes/email.routes");
 const patientRoutes = require("./src/routes/patient.routes");
 const paymentRoutes = require('./src/routes/payment.routes');
+const doctorRoutes = require('./src/routes/doctor.routes');
 
 app.use('/api/v1/users', authRoutes);
 app.use('/api/v1/email', emailRoutes);
 app.use('/api/v1/patient', patientRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/doctor', doctorRoutes);
 
 
 

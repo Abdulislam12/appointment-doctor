@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const generateVerificationEmail = require("../utilis/emailTemplate");
+const generateVerificationEmail = require("../utils/emailTemplate");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",

@@ -1,7 +1,7 @@
 const Slot = require('../models/appointment.model');
 const Payment = require('../models/payment.model');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const ApiError = require('../utilis/ApiError');
+const ApiError = require('../utils/ApiError');
 const validator = require('validator');
 
 
@@ -12,14 +12,20 @@ const getAvailableSlots = async (date) => {
   }
 
   const now = new Date();
+
   const availableSlots = await Slot.find({
     date,
     booked: false,
     $or: [{ holdUntil: null }, { holdUntil: { $lt: now } }]
   }).select('date time');
 
-  return availableSlots.filter(slot => new Date(`${slot.date} ${slot.time}`) > now);
+  return availableSlots.filter(slot => {
+    const [startTime] = slot.time.split(' - ');
+    const slotDateTime = new Date(`${slot.date} ${startTime}`);
+    return slotDateTime > now;
+  });
 };
+
 
 
 // Book Slot Services

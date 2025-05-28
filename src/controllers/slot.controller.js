@@ -1,5 +1,5 @@
 const { getAvailableSlots, bookSlot, cancelSlotBooking, updateSlot, fetchUserAppointments, getAppointmentByIdService, } = require('../services/appointment.service');
-const ApiResponse = require("../utilis/ApiResponse");
+const ApiResponse = require("../utils/ApiResponse");
 
 
 // Select Slot Controller

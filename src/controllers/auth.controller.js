@@ -1,7 +1,7 @@
 const { registerUser, loginUser, logoutUser, changePassword, getUserProfile, updateUserProfile, refreshAccessTokenService } = require("../services/auth.service");
 const { validatePasswordFields } = require("../validations/passwordValidators");
-const ApiResponse = require("../utilis/ApiResponse");
-const ApiError = require("../utilis/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
 
 
 
@@ -66,7 +66,7 @@ const login = async (req, res, next) => {
       .cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     const response = new ApiResponse(201, "Login Successfully", {
-      user: user.email,
+      user,
       accessToken,
       refreshToken,
     });

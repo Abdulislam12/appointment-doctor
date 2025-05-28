@@ -1,5 +1,5 @@
 const { createCheckoutSessionService } = require('../services/payment.service');
-const ApiResponse = require('../utilis/ApiResponse');
+const ApiResponse = require('../utils/ApiResponse');
 
 const createCheckoutSessionController = async (req, res, next) => {
   try {

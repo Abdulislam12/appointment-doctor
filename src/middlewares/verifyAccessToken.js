@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const ApiError = require("../utilis/ApiError");
+const ApiError = require("../utils/ApiError");
 const verifyAccessToken = (req, res, next) => {
   const token = req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
 
