@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createSlots, getDoctorAvailablePaidAppointments, updateAppointmentStatusController,getDoctorAppointmentsWithFilter } = require("../controllers/doctor.controller");
+const { createSlots, getDoctorAvailablePaidAppointments, updateAppointmentStatusController, getDoctorAppointmentsWithFilter } = require("../controllers/doctor.controller");
 const verifyAccessToken = require("../middlewares/verifyAccessToken");
 const adminAccess = require("../middlewares/adminAccess")
 

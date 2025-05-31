@@ -16,7 +16,7 @@ const slotSchema = new mongoose.Schema({
   AppointmentStatus: {
     type: String,
     default: "pending",
-    enum: ["pending", "approved", "cancelled"]
+    enum: ["pending", "approved", "cancelled", "visited"]
   },
   patientDetails: {
     name: { type: String, trim: true },

@@ -27,7 +27,7 @@ exports.processStripeEvent = async (event) => {
       // Optionally update the corresponding slot
       const slot = await Slot.findById(payment.slotId);
       if (slot) {
-        slot.booked = true;
+        slot.booked = false;
         slot.holdUntil = null;
         await slot.save();
       }
