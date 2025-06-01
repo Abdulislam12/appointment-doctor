@@ -1,15 +1,18 @@
-const rateLimit = require('express-rate-limit');
-const ApiResponse = require('../utils/ApiResponse');
+const rateLimit = require("express-rate-limit");
+const ApiResponse = require("../utils/ApiResponse");
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
+  windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    const response = new ApiResponse(429, 'Too many auth attempts from this IP, please try again later.');
+    const response = new ApiResponse(
+      429,
+      "Too many auth attempts from this IP, please try again later."
+    );
     res.status(429).json(response);
-  }
+  },
 });
 
 const paymentLimiter = rateLimit({
@@ -18,9 +21,12 @@ const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    const response = new ApiResponse(429, 'Too many payment requests, please slow down.');
+    const response = new ApiResponse(
+      429,
+      "Too many payment requests, please slow down."
+    );
     res.status(429).json(response);
-  }
+  },
 });
 
 const emailLimiter = rateLimit({
@@ -29,13 +35,16 @@ const emailLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    const response = new ApiResponse(429, 'Too many email requests, please wait before retrying.');
+    const response = new ApiResponse(
+      429,
+      "Too many email requests, please wait before retrying."
+    );
     res.status(429).json(response);
-  }
+  },
 });
 
 module.exports = {
   authLimiter,
   paymentLimiter,
-  emailLimiter
+  emailLimiter,
 };
