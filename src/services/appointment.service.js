@@ -1,4 +1,4 @@
-const Slot = require('../models/appointment.model');
+const Slot = require('../models/slot.model.js');
 const Payment = require('../models/payment.model');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const ApiError = require('../utils/ApiError');

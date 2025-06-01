@@ -1,31 +1,29 @@
-const { createSlotsService, getDoctorAvailablePaidAppointmentsService, updateAppointmentStatusService, getDoctorAppointmentsFilterService
+const { createDoctorAppointmentSlots, fetchDoctorPaidAppointments, updateDoctorAppointmentStatus, filterDoctorAppointments
 } = require("../services/doctor.service")
 const ApiResponse = require("../utils/ApiResponse")
 
 
-const createSlots = async (req, res, next) => {
+const createDoctorSlotController = async (req, res, next) => {
     const allowedFields = ["date", "startTime", "endTime", "duration"];
 
     try {
         const receivedFields = Object.keys(req.body);
 
-        // Check for extra/unexpected fields
         const extraFields = receivedFields.filter(field => !allowedFields.includes(field));
         if (extraFields.length > 0) {
             return res.status(400).json(new ApiResponse(400, `Extra fields not allowed: ${extraFields}`));
         }
+
         const { date, startTime, endTime, duration } = req.body;
-        const result = await createSlotsService(date, startTime, endTime, duration, req.user._id);
+        const result = await createDoctorAppointmentSlots(date, startTime, endTime, duration, req.user._id);
 
         return res.status(201).json(new ApiResponse(201, "Appointment Set Successfully", result));
     } catch (err) {
-        next(err)
+        next(err);
     }
-
-
 };
 
-const getDoctorAvailablePaidAppointments = async (req, res, next) => {
+const getPaidPendingAppointmentsController = async (req, res, next) => {
     try {
         if (req.user.role !== "doctor") {
             return res.status(403).json(new ApiResponse(403, "Access denied. Only doctors can access this."));
@@ -36,7 +34,7 @@ const getDoctorAvailablePaidAppointments = async (req, res, next) => {
             throw new ApiError(400, "Doctor ID is required.");
         }
 
-        const appointments = await getDoctorAvailablePaidAppointmentsService(doctorId);
+        const appointments = await fetchDoctorPaidAppointments(doctorId);
 
         return res.status(200).json(new ApiResponse(200, "Paid pending appointments fetched", appointments));
     } catch (err) {
@@ -44,11 +42,11 @@ const getDoctorAvailablePaidAppointments = async (req, res, next) => {
     }
 };
 
-const getDoctorAppointmentsWithFilter = async (req, res, next) => {
+const filterDoctorAppointmentsController = async (req, res, next) => {
     try {
         const { date, AppointmentStatus } = req.query;
 
-        const appointments = await getDoctorAppointmentsFilterService(date, AppointmentStatus);
+        const appointments = await filterDoctorAppointments(date, AppointmentStatus);
 
         return res.status(200).json(new ApiResponse(200, "Filtered appointments fetched successfully", appointments));
     } catch (err) {
@@ -56,7 +54,7 @@ const getDoctorAppointmentsWithFilter = async (req, res, next) => {
     }
 };
 
-const updateAppointmentStatusController = async (req, res, next) => {
+const updateDoctorAppointmentStatusController = async (req, res, next) => {
     try {
         const { slotId } = req.params;
         const { status } = req.body;
@@ -65,7 +63,7 @@ const updateAppointmentStatusController = async (req, res, next) => {
             return res.status(400).json(new ApiResponse(400, "Invalid status value"));
         }
 
-        const updatedSlot = await updateAppointmentStatusService(slotId, status);
+        const updatedSlot = await updateDoctorAppointmentStatus(slotId, status);
 
         return res.status(200).json(new ApiResponse(200, `Appointment ${status} successfully`, updatedSlot));
     } catch (error) {
@@ -73,10 +71,30 @@ const updateAppointmentStatusController = async (req, res, next) => {
     }
 };
 
+const getPatients = async (req, res, next) => {
+  try {
+    const patients = await getAllPatients();
+    res.status(200).json(new ApiResponse(200, patients, "Patients fetched"));
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getPayments = async (req, res, next) => {
+  try {
+    const payments = await getAllPayments();
+    res.status(200).json(new ApiResponse(200, payments, "Payments fetched"));
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 module.exports = {
-    createSlots,
-    getDoctorAvailablePaidAppointments,
-    updateAppointmentStatusController,
-    getDoctorAppointmentsWithFilter,
-}
+    createDoctorSlotController,
+    getPaidPendingAppointmentsController,
+    updateDoctorAppointmentStatusController,
+    filterDoctorAppointmentsController,
+    getPatients,
+    getPayments
+};
