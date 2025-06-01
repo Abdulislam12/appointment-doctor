@@ -1,4 +1,4 @@
-const Slot = require('../models/appointment.model');
+const Slot = require('../models/slot.model');
 const Payment = require('../models/payment.model');
 
 exports.processStripeEvent = async (event) => {

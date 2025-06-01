@@ -1,5 +1,5 @@
 const Stripe = require('stripe');
-const Slot = require('../models/appointment.model');
+const Slot = require('../models/slot.model');
 const Payment = require('../models/payment.model');
 const ApiError = require('../utils/ApiError');
 

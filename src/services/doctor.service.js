@@ -1,10 +1,11 @@
 const moment = require("moment");
-const Slot = require("../models/appointment.model");
+const Slot = require("../models/slot.model");
+const User = require("../models/user.model");
 const Payment = require("../models/payment.model");
 const ApiError = require("../utils/ApiError")
 
 
-const createSlotsService = async (date, startTime, endTime, duration, doctorId) => {
+const createDoctorAppointmentSlots = async (date, startTime, endTime, duration, doctorId) => {
     const datetimeFormat = "MM-DD-YYYY hh:mm A";
 
     const start = moment(`${date} ${startTime}`, datetimeFormat);
@@ -87,7 +88,7 @@ const createSlotsService = async (date, startTime, endTime, duration, doctorId) 
     return slotDocuments;
 };
 
-const getDoctorAvailablePaidAppointmentsService = async (doctorId) => {
+const fetchDoctorPaidAppointments = async (doctorId) => {
 
     // 1. Find all PAID payment records
     const paidPayments = await Payment.find({ paymentStatus: "paid" });
@@ -114,7 +115,7 @@ const getDoctorAvailablePaidAppointmentsService = async (doctorId) => {
     return slots;
 };
 
-const updateAppointmentStatusService = async (slotId, status) => {
+const updateDoctorAppointmentStatus = async (slotId, status) => {
     const slot = await Slot.findById(slotId);
 
     if (!slot) {
@@ -133,14 +134,14 @@ const updateAppointmentStatusService = async (slotId, status) => {
     return slot;
 };
 
-const getDoctorAppointmentsFilterService = async (date, AppointmentStatus) => {
+const filterDoctorAppointments = async (date, AppointmentStatus) => {
     const filter = {};
 
     // Filter by date
     // check appointment for current date
     if (date === "today") {
         filter.date = moment().format("MM-DD-YYYY");
-        
+
 
         // now check date for if its not today
 
@@ -168,10 +169,19 @@ const getDoctorAppointmentsFilterService = async (date, AppointmentStatus) => {
     return appointments;
 };
 
+const getAllPatients = async () => {
+    return await User.find({ role: "patient" }).select("-password");
+};
+
+const getAllPayments = async () => {
+    return await Payment.find().populate("userId", "username email");
+};
 
 module.exports = {
-    createSlotsService,
-    getDoctorAvailablePaidAppointmentsService,
-    updateAppointmentStatusService,
-    getDoctorAppointmentsFilterService,
+    createDoctorAppointmentSlots,
+    fetchDoctorPaidAppointments,
+    updateDoctorAppointmentStatus,
+    filterDoctorAppointments,
+    getAllPatients,
+    getAllPayments
 };

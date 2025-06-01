@@ -1,9 +1,9 @@
-const verifyOtp = require('../services/otpVerify.service');
+const verifyOtpServices = require('../services/otpVerify.service');
 const ApiResponse = require('../utils/ApiResponse');
 const verifyEmail = async (req, res) => {
     try {
         const { code } = req.body;
-        const response = await verifyOtp(code);
+        const response = await verifyOtpServices(code);
 
         return res
             .status(200)
