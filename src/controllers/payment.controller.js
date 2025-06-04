@@ -1,5 +1,7 @@
-const { createCheckoutSessionService } = require('../services/payment.service');
-const ApiResponse = require('../utils/ApiResponse');
+const { createCheckoutSessionService } = require("../services/payment.service");
+const ApiResponse = require("../utils/ApiResponse");
+
+// Stripe checkout Controller
 
 const createCheckoutSessionController = async (req, res, next) => {
   try {
@@ -8,7 +10,9 @@ const createCheckoutSessionController = async (req, res, next) => {
 
     const sessionData = await createCheckoutSessionService(slotId, userId);
 
-    res.status(200).json(new ApiResponse(200, 'Stripe session created', sessionData));
+    res
+      .status(200)
+      .json(new ApiResponse(200, "Stripe session created", sessionData));
   } catch (err) {
     next(err);
   }

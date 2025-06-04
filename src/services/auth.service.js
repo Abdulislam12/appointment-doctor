@@ -1,9 +1,15 @@
 const ApiError = require("../utils/ApiError");
-const User = require('../models/user.model');
-const sendVerificationEmail = require("../services/email.service")
+const User = require("../models/user.model");
+const sendVerificationEmail = require("../services/email.service");
 const jwt = require("jsonwebtoken");
-const { validateRequiredFields, validateFirstName, validateLastName, validateEmail, validatePassword } = require('../validations/authValidations');
-const generateOTP = require('../utils/generateOtp');
+const {
+  validateRequiredFields,
+  validateFirstName,
+  validateLastName,
+  validateEmail,
+  validatePassword,
+} = require("../validations/authValidations");
+const generateOTP = require("../utils/generateOtp");
 const verficationCode = generateOTP();
 
 // User registerUser Services
@@ -16,7 +22,7 @@ const registerUser = async ({ firstName, lastName, email, password }) => {
   validateEmail(email);
   validatePassword(password);
 
-  const existingEmail = await User.findOne({ email })
+  const existingEmail = await User.findOne({ email });
 
   // If email is taken and unverified
 
@@ -32,12 +38,11 @@ const registerUser = async ({ firstName, lastName, email, password }) => {
     lastName,
     email,
     password,
-    verficationCode
-
+    verficationCode,
   });
 
   await newUser.save();
-  await sendVerificationEmail(newUser.email, verficationCode)
+  await sendVerificationEmail(newUser.email, verficationCode);
 
   return newUser;
 };
@@ -46,16 +51,18 @@ const registerUser = async ({ firstName, lastName, email, password }) => {
 
 const loginUser = async ({ email, password }) => {
   const requiredFields = [email, password];
-  if (requiredFields.some(field => field?.trim() === "")) {
+  if (requiredFields.some((field) => field?.trim() === "")) {
     throw new ApiError(400, "Both Email and Password are required");
   }
 
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "Email not found");
 
-
   if (!user.isEmailVerified) {
-    throw new ApiError(403, "Email not verified. Please verify your email before logging in.");
+    throw new ApiError(
+      403,
+      "Email not verified. Please verify your email before logging in."
+    );
   }
   const isMatch = await user.isPasswordCorrect(password);
   if (!isMatch) throw new ApiError(401, "Invalid credentials");
@@ -70,7 +77,6 @@ const loginUser = async ({ email, password }) => {
 };
 
 // User logoutUser Services
-
 
 const logoutUser = async (userId) => {
   const user = await User.findById(userId);
@@ -89,10 +95,15 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   if (!user) throw new ApiError(404, "User not found");
 
   const isCorrectPassword = await user.isPasswordCorrect(currentPassword);
-  if (!isCorrectPassword) throw new ApiError(400, "Current password is incorrect");
+  if (!isCorrectPassword)
+    throw new ApiError(400, "Current password is incorrect");
 
   const isSameAsCurrent = await user.isPasswordCorrect(newPassword);
-  if (isSameAsCurrent) throw new ApiError(400, "New password must be different from the current password");
+  if (isSameAsCurrent)
+    throw new ApiError(
+      400,
+      "New password must be different from the current password"
+    );
 
   user.password = newPassword;
   await user.save();
@@ -101,15 +112,17 @@ const changePassword = async (userId, currentPassword, newPassword) => {
 // User getUserProfile
 
 const getUserProfile = async (userId) => {
-  const user = await User.findById(userId).select('firstName lastName profilePicture'); // exclude password
-  if (!user) throw new ApiError(404, 'User not found');
+  const user = await User.findById(userId).select(
+    "firstName lastName profilePicture"
+  ); // exclude password
+  if (!user) throw new ApiError(404, "User not found");
   return user;
 };
 
 // User UpdateProfile Services
 
 const updateUserProfile = async (userId, updateData) => {
-  const allowedFields = ['firstName', 'lastName', 'profilePicture'];
+  const allowedFields = ["firstName", "lastName", "profilePicture"];
   const filteredData = {};
 
   for (const key of allowedFields) {
@@ -122,9 +135,9 @@ const updateUserProfile = async (userId, updateData) => {
     userId,
     { $set: filteredData },
     { new: true, runValidators: true }
-  ).select('firstName lastName profilePicture');
+  ).select("firstName lastName profilePicture");
 
-  if (!updatedUser) throw new ApiError(404, 'User not found');
+  if (!updatedUser) throw new ApiError(404, "User not found");
 
   return updatedUser;
 };
@@ -140,7 +153,6 @@ const refreshAccessTokenService = async (refreshToken) => {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     const user = await User.findById(decoded._id);
 
-
     if (!user) {
       throw new ApiError(401, "Invalid refresh token");
     }
@@ -149,11 +161,9 @@ const refreshAccessTokenService = async (refreshToken) => {
 
     return { accessToken };
   } catch (err) {
-    throw new ApiError(401,err);
+    throw new ApiError(401, err);
   }
 };
-
-
 
 module.exports = {
   registerUser,
@@ -162,5 +172,5 @@ module.exports = {
   changePassword,
   getUserProfile,
   updateUserProfile,
-  refreshAccessTokenService
+  refreshAccessTokenService,
 };

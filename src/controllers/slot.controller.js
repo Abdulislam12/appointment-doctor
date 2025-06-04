@@ -1,6 +1,12 @@
-const { getAvailableSlots, bookSlot, cancelSlotBooking, updateSlot, fetchUserAppointments, getAppointmentByIdService, } = require('../services/appointment.service');
+const {
+  getAvailableSlots,
+  bookSlot,
+  cancelSlotBooking,
+  updateSlot,
+  fetchUserAppointments,
+  getAppointmentByIdService,
+} = require("../services/appointment.service");
 const ApiResponse = require("../utils/ApiResponse");
-
 
 // Select Slot Controller
 
@@ -10,7 +16,11 @@ const slotController = async (req, res, next) => {
 
     const slots = await getAvailableSlots(date);
 
-    const response = new ApiResponse(200, `Available Slot(s) on ${date}`, slots);
+    const response = new ApiResponse(
+      200,
+      `Available Slot(s) on ${date}`,
+      slots
+    );
     res.status(response.statusCode).json(response);
   } catch (err) {
     next(err);
@@ -25,7 +35,11 @@ const bookAppointment = async (req, res, next) => {
   try {
     const result = await bookSlot(date, time, patientDetails, req.user._id);
 
-    const response = new ApiResponse(201, "Your appointment is pending. Please complete the payment to confirm", result);
+    const response = new ApiResponse(
+      201,
+      "Your appointment is pending. Please complete the payment to confirm",
+      result
+    );
     res.status(response.statusCode).json(response);
   } catch (err) {
     next(err);
@@ -40,13 +54,16 @@ const cancelAppointment = async (req, res, next) => {
 
   try {
     const result = await cancelSlotBooking(slotId, userId);
-    const response = new ApiResponse(200, 'Appointment cancelled successfully', result);
+    const response = new ApiResponse(
+      200,
+      "Appointment cancelled successfully",
+      result
+    );
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
-
 // Appontment Update Controller
 
 const updateAppointment = async (req, res, next) => {
@@ -54,8 +71,20 @@ const updateAppointment = async (req, res, next) => {
   const { date, time, patientDetails } = req.body;
 
   try {
-    const updatedSlot = await updateSlot(id, date, time, patientDetails, req.user._id);
-    const response = new ApiResponse(200, 'Appointment updated successfully', updatedSlot);
+    const updatedSlot = await updateSlot(
+      id,
+      date,
+      time,
+      patientDetails,
+      req.user._id
+    );
+
+    const response = new ApiResponse(
+      200,
+      "Appointment updated successfully",
+      updatedSlot
+    );
+
     res.status(response.statusCode).json(response);
   } catch (err) {
     next(err);
@@ -69,7 +98,7 @@ const getUserAppointments = async (req, res, next) => {
     const userId = req.user._id;
     const appointments = await fetchUserAppointments(userId);
 
-    const response = new ApiResponse(200, 'Your Appointments', appointments);
+    const response = new ApiResponse(200, "Your Appointments", appointments);
     res.status(200).json(response);
   } catch (err) {
     next(err);
@@ -83,13 +112,16 @@ const getAppointmentById = async (req, res, next) => {
 
   try {
     const appointment = await getAppointmentByIdService(id);
-    const response = new ApiResponse(200, 'Appointment fetched successfully', appointment);
+    const response = new ApiResponse(
+      200,
+      "Appointment fetched successfully",
+      appointment
+    );
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
-
 
 module.exports = {
   slotController,
@@ -97,5 +129,5 @@ module.exports = {
   cancelAppointment,
   updateAppointment,
   getUserAppointments,
-  getAppointmentById
+  getAppointmentById,
 };

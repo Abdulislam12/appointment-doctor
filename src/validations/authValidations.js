@@ -39,9 +39,16 @@ const validatePassword = (password) => {
   }
 };
 
+const validateRequiredFields = (fields) => {
+  if (fields.some((field) => !field?.trim())) {
+    throw new ApiError(400, "All fields are required and must not be empty");
+  }
+};
+
 module.exports = {
   validateFirstName,
   validateLastName,
   validateEmail,
   validatePassword,
+  validateRequiredFields,
 };

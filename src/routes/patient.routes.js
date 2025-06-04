@@ -1,27 +1,25 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const verifyAccessToken = require("../middlewares/verifyAccessToken");
-const { slotController, bookAppointment, cancelAppointment, updateAppointment, getUserAppointments, getAppointmentById } = require('../controllers/slot.controller');
+const {
+  slotController,
+  bookAppointment,
+  cancelAppointment,
+  updateAppointment,
+  getUserAppointments,
+  getAppointmentById,
+} = require("../controllers/slot.controller");
 
+router.get("/get-slots/:date", slotController);
 
+router.post("/book-appointment", verifyAccessToken, bookAppointment);
 
-// @route GET /api/v1/patient/get-slots
-router.get('/get-slots/:date', slotController);
+router.delete("/cancel-appointment/:id", verifyAccessToken, cancelAppointment);
 
-// @route POST /api/v1/patient/book-appointment
-router.post('/book-appointment', verifyAccessToken, bookAppointment);
+router.put("/update-appointment/:id", verifyAccessToken, updateAppointment);
 
-// @route DELETE /api/v1/patient/cancel-appointment/:id
-router.delete('/cancel-appointment/:id', verifyAccessToken, cancelAppointment);
+router.get("/patient-appointments", verifyAccessToken, getUserAppointments);
 
-// @route PUT /api/v1/patient/update-appointment/:id
-router.put('/update-appointment/:id', verifyAccessToken, updateAppointment);
-
-// @route GET /api/v1/patient/patient-appointments
-router.get('/patient-appointments', verifyAccessToken, getUserAppointments);
-
-// @route GET /api/v1/patient/appointment
-router.get('/appointment/:id', verifyAccessToken, getAppointmentById);
-
+router.get("/appointment/:id", verifyAccessToken, getAppointmentById);
 
 module.exports = router;

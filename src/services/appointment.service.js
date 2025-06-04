@@ -1,13 +1,13 @@
-const Slot = require('../models/slot.model.js');
-const Payment = require('../models/payment.model');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const ApiError = require('../utils/ApiError');
-const validator = require('validator');
-
+const Slot = require("../models/slot.model.js");
+const Payment = require("../models/payment.model");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const ApiError = require("../utils/ApiError");
+const validator = require("validator");
+const moment = require("moment");
 
 // Get Available Slots
 const getAvailableSlots = async (date) => {
-  if (!date || typeof date !== 'string' || !date.trim()) {
+  if (!date || typeof date !== "string" || !date.trim()) {
     throw new ApiError(400, "Valid date is required to fetch slots.");
   }
 
@@ -16,28 +16,36 @@ const getAvailableSlots = async (date) => {
   const availableSlots = await Slot.find({
     date,
     booked: false,
-    $or: [{ holdUntil: null }, { holdUntil: { $lt: now } }]
-  }).select('date time');
+    paymentStatus: "unpaid",
+    $or: [{ holdUntil: null }, { holdUntil: { $lt: now } }],
+  }).select("date time");
 
-  return availableSlots.filter(slot => {
-    const [startTime] = slot.time.split(' - ');
+  return availableSlots.filter((slot) => {
+    const [startTime] = slot.time.split(" - ");
     const slotDateTime = new Date(`${slot.date} ${startTime}`);
     return slotDateTime > now;
   });
 };
 
-
-
 // Book Slot Services
 
 const bookSlot = async (date, time, patientDetails, userId) => {
-  if (![date, time, userId].every(f => typeof f === 'string' && f.trim())) {
-    throw new ApiError(400, 'Date, time, and user ID are required to book a slot.');
+  if (![date, time, userId].every((f) => typeof f === "string" && f.trim())) {
+    throw new ApiError(
+      400,
+      "Date, time, and user ID are required to book a slot."
+    );
   }
 
-  const requiredFields = ['name', 'phone', 'address'];
-  if (!patientDetails || requiredFields.some(field => !patientDetails[field]?.trim())) {
-    throw new ApiError(400, 'Complete patient details (name, phone, address) are required.');
+  const requiredFields = ["name", "phone", "address"];
+  if (
+    !patientDetails ||
+    requiredFields.some((field) => !patientDetails[field]?.trim())
+  ) {
+    throw new ApiError(
+      400,
+      "Complete patient details (name, phone, address) are required."
+    );
   }
 
   const now = new Date();
@@ -45,10 +53,10 @@ const bookSlot = async (date, time, patientDetails, userId) => {
     date,
     time,
     booked: false,
-    $or: [{ holdUntil: null }, { holdUntil: { $lt: now } }]
+    $or: [{ holdUntil: null }, { holdUntil: { $lt: now } }],
   });
 
-  if (!slot) throw new ApiError(400, 'Slot is not available.');
+  if (!slot) throw new ApiError(400, "Slot is not available.");
 
   const holdUntil = new Date(now.getTime() + 2 * 60 * 1000);
   const updatedSlot = await Slot.findOneAndUpdate(
@@ -57,13 +65,13 @@ const bookSlot = async (date, time, patientDetails, userId) => {
       $set: {
         holdUntil,
         patientDetails,
-        userBookAppointment: userId
-      }
+        userBookAppointment: userId,
+      },
     },
     { new: true }
-  ).populate('userBookAppointment', 'firstName lastName email');
+  ).populate("userBookAppointment", "firstName lastName email");
 
-  if (!updatedSlot) throw new ApiError(409, 'Slot was taken.');
+  if (!updatedSlot) throw new ApiError(409, "Slot was taken.");
 
   return updatedSlot;
 };
@@ -71,136 +79,190 @@ const bookSlot = async (date, time, patientDetails, userId) => {
 // Cancel Slot Services
 
 const cancelSlotBooking = async (slotId, userId) => {
-  if (![slotId, userId].every(f => typeof f === 'string' && f.trim())) {
-    throw new ApiError(400, 'Slot ID and user ID are required to cancel an appointment.');
+  if (![slotId, userId].every((f) => typeof f === "string" && f.trim())) {
+    throw new ApiError(
+      400,
+      "Slot ID and user ID are required to cancel an appointment."
+    );
   }
 
   const slot = await Slot.findOne({ _id: slotId, userBookAppointment: userId });
-  if (!slot) throw new ApiError(404, 'No booked appointment found to cancel.');
+  if (!slot) throw new ApiError(404, "No booked appointment found to cancel.");
 
+  // Safely parse time
+  const [startTime] = slot.time.split(" - ");
+  const appointmentDateTime = moment(
+    `${slot.date} ${startTime}`,
+    "MM-DD-YYYY hh:mm A"
+  ).toDate();
   const now = new Date();
-  const appointmentDateTime = new Date(`${slot.date} ${slot.time}`);
   const isMoreThan6Hours = (appointmentDateTime - now) / (1000 * 60) >= 360;
 
+  // Unbook slot
   slot.booked = false;
   slot.userBookAppointment = null;
-  slot.AppointmentStatus = isMoreThan6Hours ? 'pending' : 'cancelled';
-  if (isMoreThan6Hours) slot.patientDetails = { name: '', phone: '', address: '' };
+  slot.paymentStatus = "unpaid";
+  slot.AppointmentStatus = isMoreThan6Hours ? "pending" : "cancelled";
+  if (isMoreThan6Hours) {
+    slot.patientDetails = { name: "", phone: "", address: "" };
+  }
 
-  let paymentNote = '';
+  let paymentNote = "";
 
   const payment = await Payment.findOne({ slotId });
-  if (payment?.status === 'succeeded') {
-    const session = await stripe.checkout.sessions.retrieve(payment.stripeSessionId);
-    const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+  if (payment?.status === "succeeded") {
+    if (!payment.stripeSessionId)
+      throw new ApiError(400, "Stripe session ID missing");
+
+    const session = await stripe.checkout.sessions.retrieve(
+      payment.stripeSessionId
+    );
+    if (!session.payment_intent)
+      throw new ApiError(400, "Stripe payment intent not found");
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      session.payment_intent
+    );
 
     const refundAmount = isMoreThan6Hours
       ? paymentIntent.amount
-      : Math.floor(paymentIntent.amount * 0.9);
+      : Math.floor(paymentIntent.amount * 0.9); // 10% fee
 
-    await stripe.refunds.create({
-      payment_intent: paymentIntent.id,
-      amount: refundAmount
-    });
+    try {
+      await stripe.refunds.create({
+        payment_intent: paymentIntent.id,
+        amount: refundAmount,
+      });
 
-    payment.status = isMoreThan6Hours ? 'refunded' : 'partial_refund';
-    await payment.save();
+      payment.paymentStatus = "unpaid";
+      await payment.save();
 
-    paymentNote = isMoreThan6Hours
-      ? 'Full refund processed.'
-      : '10% cancellation fee deducted.';
+      paymentNote = isMoreThan6Hours
+        ? "Full refund processed."
+        : "10% cancellation fee deducted.";
+    } catch (err) {
+      console.error("Stripe refund failed:", err);
+      throw new ApiError(500, "Failed to process refund");
+    }
   }
 
   await slot.save();
 
   return {
     slot,
-    note: `Appointment cancelled. ${paymentNote}`
+    note: `Appointment cancelled. ${paymentNote}`,
   };
 };
-
-
 // Update Slot Services
 
 const updateSlot = async (id, date, time, patientDetails, userId) => {
   const slot = await Slot.findById(id);
-  if (!slot) throw new ApiError(404, 'Appointment slot not found');
+  if (!slot) throw new ApiError(404, "Appointment slot not found");
+
   if (!slot.userBookAppointment?.equals(userId)) {
-    throw new ApiError(403, 'You can only update your own booked appointments');
+    throw new ApiError(403, "You can only update your own booked appointments");
   }
 
-  if (!validator.isISO8601(date)) {
-    throw new ApiError(400, 'Invalid date format. Use YYYY-MM-DD');
+  // Validate date using moment (accept MM-D-YYYY or MM-DD-YYYY)
+  const parsedDate = moment(date, ["MM-D-YYYY", "MM-DD-YYYY"], true);
+  if (!parsedDate.isValid()) {
+    throw new ApiError(400, "Invalid date format. Use MM-DD-YYYY or MM-D-YYYY");
   }
 
-  const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/;
-  if (!timeRegex.test(time)) {
-    throw new ApiError(400, 'Invalid time format. Use HH:MM AM/PM');
+  // Validate time range (e.g. "01:15 PM - 01:30 PM")
+  const timeRangeRegex =
+    /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM) - (0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/;
+  if (!timeRangeRegex.test(time)) {
+    throw new ApiError(
+      400,
+      "Invalid time format. Use hh:mm AM/PM - hh:mm AM/PM"
+    );
   }
 
-  const requiredFields = ['name', 'phone', 'address'];
-  if (!patientDetails || requiredFields.some(field => !patientDetails[field]?.trim())) {
-    throw new ApiError(400, 'Invalid patient details.');
+  // Validate patient details
+  const requiredFields = ["name", "phone", "address"];
+  if (
+    !patientDetails ||
+    requiredFields.some((field) => !patientDetails[field]?.trim())
+  ) {
+    throw new ApiError(400, "Invalid patient details.");
   }
 
-  if (!validator.isMobilePhone(patientDetails.phone, 'any')) {
-    throw new ApiError(400, 'Invalid phone number format');
+  if (!validator.isMobilePhone(patientDetails.phone, "any")) {
+    throw new ApiError(400, "Invalid phone number format");
   }
 
+  // Check if the requested slot time is already booked by someone else
   const existingSlot = await Slot.findOne({
     date,
     time,
-    booked: false,
-    _id: { $ne: id }
+    booked: true,
+    _id: { $ne: id },
   });
 
-  if (!existingSlot) throw new ApiError(400, 'Slot is not available');
+  if (existingSlot) {
+    throw new ApiError(400, "Slot is not available");
+  }
 
+  // Update slot details
   slot.date = date;
   slot.time = time;
   slot.patientDetails = patientDetails;
+  slot.AppointmentStatus = "pending"; // Reset status on update
   await slot.save();
 
-  return Slot.findById(slot._id).populate('userBookAppointment', 'firstName lastName email');
+  return Slot.findById(slot._id).populate(
+    "userBookAppointment",
+    "firstName lastName email"
+  );
 };
-
-
 // Get All Appointments Services
 
 const fetchUserAppointments = async (userId) => {
-  if (!userId || typeof userId !== 'string' || !userId.trim()) {
-    throw new ApiError(400, 'Valid user ID is required to fetch appointments.');
+  if (!userId || typeof userId !== "string" || !userId.trim()) {
+    throw new ApiError(400, "Valid user ID is required to fetch appointments.");
   }
 
   const slots = await Slot.find({
-    userBookAppointment: userId
+    userBookAppointment: userId,
   }).sort({ date: 1, time: 1 });
 
-  if (!slots.length) throw new ApiError(404, 'No appointments found.');
+  if (!slots.length) throw new ApiError(404, "No appointments found.");
 
-  const paidSlotIds = await Payment.find({ userId, status: 'succeeded' }).distinct('slotId');
+  const paidSlotIds = await Payment.find({
+    userId,
+    status: "succeeded",
+  }).distinct("slotId");
 
-  return slots.filter(slot => paidSlotIds.some(id => id.equals(slot._id)));
+  return slots.filter((slot) => paidSlotIds.some((id) => id.equals(slot._id)));
 };
-
 
 // Get Single Appointments Services
 
 const getAppointmentByIdService = async (id) => {
-  if (!id || typeof id !== 'string' || !id.trim()) {
-    throw new ApiError(400, 'Valid appointment ID is required.');
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new ApiError(400, "Valid appointment ID is required.");
   }
 
   const slot = await Slot.findById(id);
-  if (!slot) throw new ApiError(404, 'Appointment not found');
+  if (!slot) throw new ApiError(404, "Appointment not found");
 
   const payment = await Payment.findOne({ slotId: id });
-  if (!payment || payment.status !== 'succeeded') {
-    throw new ApiError(403, 'You must complete the payment to view this appointment.');
+  if (!payment || payment.status !== "succeeded") {
+    throw new ApiError(
+      403,
+      "You must complete the payment to view this appointment."
+    );
   }
 
   return slot;
 };
 
-
-module.exports = { getAvailableSlots, bookSlot, cancelSlotBooking, updateSlot, fetchUserAppointments, getAppointmentByIdService }
+module.exports = {
+  getAvailableSlots,
+  bookSlot,
+  cancelSlotBooking,
+  updateSlot,
+  fetchUserAppointments,
+  getAppointmentByIdService,
+};
