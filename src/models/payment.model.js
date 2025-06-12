@@ -28,12 +28,11 @@ const paymentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["succeeded", "failed", "pending", "refunded", "partial_refund"],
-      default: "pending",
+      default: "refunded",
     },
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "paid", "refunded", "partial_refund"],
+      enum: ["unpaid", "paid"],
       default: "unpaid",
     },
     stripeSessionId: {

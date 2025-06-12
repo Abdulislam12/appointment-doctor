@@ -89,60 +89,62 @@ const cancelSlotBooking = async (slotId, userId) => {
   const slot = await Slot.findOne({ _id: slotId, userBookAppointment: userId });
   if (!slot) throw new ApiError(404, "No booked appointment found to cancel.");
 
-  // Safely parse time
-  const [startTime] = slot.time.split(" - ");
-  const appointmentDateTime = moment(
-    `${slot.date} ${startTime}`,
-    "MM-DD-YYYY hh:mm A"
-  ).toDate();
-  const now = new Date();
-  const isMoreThan6Hours = (appointmentDateTime - now) / (1000 * 60) >= 360;
-
-  // Unbook slot
+  // Unbook the slot
   slot.booked = false;
   slot.userBookAppointment = null;
   slot.paymentStatus = "unpaid";
-  slot.AppointmentStatus = isMoreThan6Hours ? "pending" : "cancelled";
-  if (isMoreThan6Hours) {
-    slot.patientDetails = { name: "", phone: "", address: "" };
-  }
+  slot.AppointmentStatus = "cancelled";
+  slot.patientDetails = { name: "", phone: "", address: "" };
 
   let paymentNote = "";
 
   const payment = await Payment.findOne({ slotId });
+
   if (payment?.status === "succeeded") {
-    if (!payment.stripeSessionId)
+    if (!payment.stripeSessionId) {
       throw new ApiError(400, "Stripe session ID missing");
+    }
 
     const session = await stripe.checkout.sessions.retrieve(
       payment.stripeSessionId
     );
-    if (!session.payment_intent)
+    const paymentIntentId = session.payment_intent;
+    if (!paymentIntentId) {
       throw new ApiError(400, "Stripe payment intent not found");
+    }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      session.payment_intent
-    );
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const charge = paymentIntent.charges?.data?.[0];
 
-    const refundAmount = isMoreThan6Hours
-      ? paymentIntent.amount
-      : Math.floor(paymentIntent.amount * 0.9); // 10% fee
+    const alreadyRefunded =
+      charge?.refunded === true || charge?.amount_refunded > 0;
 
-    try {
-      await stripe.refunds.create({
-        payment_intent: paymentIntent.id,
-        amount: refundAmount,
-      });
+    if (alreadyRefunded) {
+      paymentNote = "Payment was already refunded earlier.";
+    } else {
+      try {
+        await stripe.refunds.create({ payment_intent: paymentIntentId });
 
-      payment.paymentStatus = "unpaid";
-      await payment.save();
+        payment.paymentStatus = "unpaid";
+        payment.status = "refunded";
+        await payment.save();
 
-      paymentNote = isMoreThan6Hours
-        ? "Full refund processed."
-        : "10% cancellation fee deducted.";
-    } catch (err) {
-      console.error("Stripe refund failed:", err);
-      throw new ApiError(500, "Failed to process refund");
+        paymentNote = "Full refund processed successfully.";
+      } catch (err) {
+        if (
+          err.code === "charge_already_refunded" ||
+          err.raw?.message?.includes("already been refunded")
+        ) {
+          payment.paymentStatus = "unpaid";
+          payment.status = "refunded";
+          await payment.save();
+
+          paymentNote = "Payment was already refunded.";
+        } else {
+          console.error("Stripe refund failed:", err);
+          throw new ApiError(500, "Failed to process refund");
+        }
+      }
     }
   }
 
@@ -153,6 +155,7 @@ const cancelSlotBooking = async (slotId, userId) => {
     note: `Appointment cancelled. ${paymentNote}`,
   };
 };
+
 // Update Slot Services
 
 const updateSlot = async (id, date, time, patientDetails, userId) => {
