@@ -9,19 +9,19 @@ const {
 const ApiResponse = require("../utils/ApiResponse");
 
 const createDoctorSlotController = async (req, res, next) => {
-  const allowedFields = ["date", "startTime", "endTime", "duration"];
+  // const allowedFields = ["date", "startTime", "endTime", "duration"];
 
   try {
-    const receivedFields = Object.keys(req.body);
-    const extraFields = receivedFields.filter(
-      (field) => !allowedFields.includes(field)
-    );
+    // const receivedFields = Object.keys(req.body);
+    // const extraFields = receivedFields.filter(
+    //   (field) => !allowedFields.includes(field)
+    // );
 
-    if (extraFields.length > 0) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, `Extra fields not allowed: ${extraFields}`));
-    }
+    // if (extraFields.length > 0) {
+    //   return res
+    //     .status(400)
+    //     .json(new ApiResponse(400, `Extra fields not allowed: ${extraFields}`));
+    // }
 
     const { date, startTime, endTime, duration } = req.body;
 
@@ -97,7 +97,6 @@ const updateDoctorAppointmentStatusController = async (req, res, next) => {
     if (!["approved", "cancelled"].includes(status)) {
       return res.status(400).json(new ApiResponse(400, "Invalid status value"));
     }
-
     const updatedSlot = await updateDoctorAppointmentStatus(slotId, status);
 
     return res

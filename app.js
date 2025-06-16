@@ -6,8 +6,6 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const passport = require("passport");
 const session = require("express-session");
-const path = require("path");
-const fs = require("fs");
 require("./src/config/google");
 const {
   authLimiter,
@@ -63,11 +61,9 @@ const authRoutes = require("./src/routes/auth.routes");
 const emailRoutes = require("./src/routes/email.routes");
 const patientRoutes = require("./src/routes/patient.routes");
 const paymentRoutes = require("./src/routes/payment.routes");
-const doctorRoutes = require("./src/routes/doctor.routes");
-const prescriptionRoutes = require("./src/routes/prescription.routes");
 
-const tempDir = path.join(__dirname, "temp_pdfs");
-if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+// [....Incomplete....]
+// const doctorRoutes = require("./src/routes/doctor.routes");
 
 // user Routes
 app.use("/api/v1/users", authLimiter, authRoutes);
@@ -81,11 +77,9 @@ app.use("/api/v1/payment", paymentLimiter, paymentRoutes);
 // patient routes
 app.use("/api/v1/patient", patientRoutes);
 
+// [....Incomplete....]
 // doctor routes
-app.use("/api/v1/doctor", doctorRoutes);
-
-// prescription routes
-app.use("/api/v1/prescription", prescriptionRoutes);
+// app.use("/api/v1/doctor", doctorRoutes);
 
 // -----------------oauth2.0 routes-----------------
 

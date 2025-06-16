@@ -19,7 +19,7 @@ exports.processStripeEvent = async (event) => {
       }
 
       // Update payment record
-      payment.status = "succeeded";
+      // payment.status = "succeeded";
       payment.paymentIntentId = session.payment_intent;
       payment.paymentMethod = session.payment_method_types?.[0] || "card";
       payment.currency = session.currency || "usd";

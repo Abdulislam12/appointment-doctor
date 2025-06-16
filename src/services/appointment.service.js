@@ -30,7 +30,7 @@ const getAvailableSlots = async (date) => {
 // Book Slot Services
 
 const bookSlot = async (date, time, patientDetails, userId) => {
-  if (![date, time, userId].every((f) => typeof f === "string" && f.trim())) {
+  if ([date, time, userId].some((f) => typeof f !== "string" || !f.trim())) {
     throw new ApiError(
       400,
       "Date, time, and user ID are required to book a slot."
@@ -79,7 +79,7 @@ const bookSlot = async (date, time, patientDetails, userId) => {
 // Cancel Slot Services
 
 const cancelSlotBooking = async (slotId, userId) => {
-  if (![slotId, userId].every((f) => typeof f === "string" && f.trim())) {
+  if ([slotId, userId].some((f) => typeof f !== "string" || !f.trim())) {
     throw new ApiError(
       400,
       "Slot ID and user ID are required to cancel an appointment."
@@ -222,10 +222,9 @@ const updateSlot = async (id, date, time, patientDetails, userId) => {
 // Get All Appointments Services
 
 const fetchUserAppointments = async (userId) => {
-  if (!userId || typeof userId !== "string" || !userId.trim()) {
+  if ([userId].some((f) => !f || typeof f !== "string" || !f.trim())) {
     throw new ApiError(400, "Valid user ID is required to fetch appointments.");
   }
-
   const slots = await Slot.find({
     userBookAppointment: userId,
   }).sort({ date: 1, time: 1 });
@@ -234,7 +233,6 @@ const fetchUserAppointments = async (userId) => {
 
   const paidSlotIds = await Payment.find({
     userId,
-    status: "succeeded",
   }).distinct("slotId");
 
   return slots.filter((slot) => paidSlotIds.some((id) => id.equals(slot._id)));
@@ -243,20 +241,8 @@ const fetchUserAppointments = async (userId) => {
 // Get Single Appointments Services
 
 const getAppointmentByIdService = async (id) => {
-  if (!id || typeof id !== "string" || !id.trim()) {
-    throw new ApiError(400, "Valid appointment ID is required.");
-  }
-
   const slot = await Slot.findById(id);
   if (!slot) throw new ApiError(404, "Appointment not found");
-
-  const payment = await Payment.findOne({ slotId: id });
-  if (!payment || payment.status !== "succeeded") {
-    throw new ApiError(
-      403,
-      "You must complete the payment to view this appointment."
-    );
-  }
 
   return slot;
 };
