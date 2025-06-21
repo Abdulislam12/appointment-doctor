@@ -7,7 +7,7 @@ const moment = require("moment");
 
 // Get Available Slots
 const getAvailableSlots = async (date) => {
-  if (!date || typeof date !== "string" || !date.trim()) {
+  if ([!date, typeof date !== "string", !date.trim()].some(Boolean)) {
     throw new ApiError(400, "Valid date is required to fetch slots.");
   }
 

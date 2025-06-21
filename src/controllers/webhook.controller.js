@@ -6,10 +6,12 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 // WebHook Controller
 
 const handleStripeWebhook = async (req, res) => {
+  // extract the stripe header
   const sig = req.headers["stripe-signature"];
   let event;
 
   try {
+    // verifiy it
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error("Webhook signature verification failed.", err.message);
@@ -17,6 +19,7 @@ const handleStripeWebhook = async (req, res) => {
   }
 
   try {
+    // send to the webhook service
     await webhookService.processStripeEvent(event);
     res.sendStatus(200);
   } catch (err) {

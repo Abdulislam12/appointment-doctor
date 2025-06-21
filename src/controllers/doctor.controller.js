@@ -9,21 +9,25 @@ const {
 const ApiResponse = require("../utils/ApiResponse");
 
 const createDoctorSlotController = async (req, res, next) => {
-  // const allowedFields = ["date", "startTime", "endTime", "duration"];
-
   try {
-    // const receivedFields = Object.keys(req.body);
-    // const extraFields = receivedFields.filter(
-    //   (field) => !allowedFields.includes(field)
-    // );
-
-    // if (extraFields.length > 0) {
-    //   return res
-    //     .status(400)
-    //     .json(new ApiResponse(400, `Extra fields not allowed: ${extraFields}`));
-    // }
-
     const { date, startTime, endTime, duration } = req.body;
+
+    const requiredFields = [date, startTime, endTime, duration];
+
+    // Check if any required field is missing or empty
+    if (
+      requiredFields.some((field) => typeof field !== "string" || !field.trim())
+    ) {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            "All fields (date, startTime, endTime, duration) are required and must be non-empty strings",
+            null
+          )
+        );
+    }
 
     const result = await createDoctorAppointmentSlots(
       date,

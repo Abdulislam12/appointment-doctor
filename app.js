@@ -61,9 +61,7 @@ const authRoutes = require("./src/routes/auth.routes");
 const emailRoutes = require("./src/routes/email.routes");
 const patientRoutes = require("./src/routes/patient.routes");
 const paymentRoutes = require("./src/routes/payment.routes");
-
-// [....Incomplete....]
-// const doctorRoutes = require("./src/routes/doctor.routes");
+const doctorRoutes = require("./src/routes/doctor.routes");
 
 // user Routes
 app.use("/api/v1/users", authLimiter, authRoutes);
@@ -77,9 +75,8 @@ app.use("/api/v1/payment", paymentLimiter, paymentRoutes);
 // patient routes
 app.use("/api/v1/patient", patientRoutes);
 
-// [....Incomplete....]
 // doctor routes
-// app.use("/api/v1/doctor", doctorRoutes);
+app.use("/api/v1/doctor", doctorRoutes);
 
 // -----------------oauth2.0 routes-----------------
 
